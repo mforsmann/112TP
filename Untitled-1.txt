@@ -1,0 +1,8 @@
+elif self.gameState == GameState.WHITE_TO_MOVE:
+                     # white clicks on a highlighted point, selected piece moves there
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        for move in self.possibleMoves:
+                            if move.imgRect.x <= x <= move.imgRect.x + move.imgRect.width and\
+                               move.imgRect.y <= y <= move.imgRect.y + move.imgRect.height:
+                                self.selectedPiece.location = move.location
+                                self.gameState = GameState.BLACK_TO_ROLL
