@@ -4,6 +4,8 @@ import random
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
+#comment!
+
 class Dice(object):
     def __init__(self):
         self.rollValues = []
