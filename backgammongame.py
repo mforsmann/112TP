@@ -61,7 +61,7 @@ class BackgammonGame(object):
         #draw roll button
         screen.fill((255,255,255), self.dice.buttonRect)
         pygame.draw.rect(screen, (0,0,0), self.dice.buttonRect, 2)
-        if self.dice.getRoll() == [None, None]:
+        if self.dice.rollValues == []:
             (self.dice.textBeforeRect.centerx,self.dice.textBeforeRect.centery) = self.dice.buttonCenter
             screen.blit(self.dice.textBeforeRoll, self.dice.textBeforeRect)
         else:
@@ -166,22 +166,39 @@ class BackgammonGame(object):
                                 if stone.rect.x <= x <= stone.rect.x + stone.diameter and\
                                 stone.rect.y <= y <= stone.rect.y + stone.diameter:
                                     self.selected = stone
+                                    self.possibleMoves = []
                                     self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player2.stones)
                                     for move in self.possibleMoves:
                                         move.position(self.xcoords)
 
                         #self.gameState = GameState.WHITE_TO_MOVE -- handle later
-                        if self.selected.possibleMoves != []:
+                        #if a point is selected to move the selected piece to, move the piece there and clear highlights
+                        if self.selected != None and self.selected.possibleMoves != []:
                             for move in self.selected.possibleMoves:
                                 if move.rect.x <= x <= move.rect.x + move.rect.width and\
                                 move.rect.y <= y <= move.rect.y + move.rect.height:
+                                    #update stone position
                                     moved = abs(move.location - self.selected.location)
-                                    if self.dice.roll1 == moved:
-                                        self.dice.roll1 = None
-                                    elif self.dice.roll2 == moved:
-                                        self.dice.roll2 = None
-                                    self.dice.rollstr = str(self.dice.roll1) + ", " + str(self.dice.roll2)
                                     self.selected.location = move.location
+                                    for stone in self.player1.movableStones:
+                                        stone.possibleMoves = []
+                                    #self.selected.possibleMoves = []
+                                    
+                                    #update unused dice
+                                    if moved in self.dice.rollValues:
+                                        self.dice.rollValues.remove(moved)
+                                        #self.selected.possibleMoves.remove(move)
+                                    elif moved not in self.dice.rollValues:
+                                        self.dice.rollValues = []
+                                    #self.selected.possibleMoves = []
+
+                                    #update dice roll
+                                    if self.dice.rollValues != []:
+                                        self.dice.rollstr = str(self.dice.rollValues[0])
+                                    self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
+                                    self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
+                                    #self.selected.location = move.location
+                                    self.selected.possibleMoves = []
                                     if self.dice.roll == []:
                                         self.gameState = GameState.BLACK_TO_ROLL
 
@@ -190,6 +207,8 @@ class BackgammonGame(object):
                     self.gameState = GameState.BLACK_TO_ROLL
 
                 elif self.gameState == GameState.BLACK_TO_ROLL:
+                    for stone in self.player1.stones:
+                        stone.possibleMoves = []
                     self.dice.isRolled = False
                     # black rolls dice (mouse click on roll button)
                     if event.type == pygame.MOUSEBUTTONUP:

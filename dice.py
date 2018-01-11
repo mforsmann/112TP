@@ -10,7 +10,7 @@ class Dice(object):
     def __init__(self):
         self.roll1 = None
         self.roll2 = None
-        self.rollValues = [self.roll1, self.roll2]
+        self.rollValues = []
         self.isRolled = False
         self.textFont = pygame.font.SysFont('calibri', 18, bold=True, italic=False)
         self.textBeforeRoll = self.textFont.render('Click to roll dice', True, BLACK, WHITE)
