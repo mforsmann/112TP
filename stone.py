@@ -15,6 +15,10 @@ class Stone(object):
         elif self.color == (255, 255, 255):
             self.image = pygame.image.load("darkpiece.png")
         self.rect = self.image.get_rect()
+    
+    def __repr__(self):
+        final = str(self.color) + "stone at " + str(self.location)
+        return final
 
     def position(self, xcoords):
         if self.color == WHITE:

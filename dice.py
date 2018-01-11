@@ -8,12 +8,14 @@ WHITE = (255, 255, 255)
 
 class Dice(object):
     def __init__(self):
-        self.rollValues = []
+        self.roll1 = None
+        self.roll2 = None
+        self.rollValues = [self.roll1, self.roll2]
         self.isRolled = False
         self.textFont = pygame.font.SysFont('calibri', 18, bold=True, italic=False)
         self.textBeforeRoll = self.textFont.render('Click to roll dice', True, BLACK, WHITE)
         self.textBeforeRect = self.textBeforeRoll.get_rect()
-        self.rollstr = ""
+        self.rollstr = str(self.roll1) + ", " + str(self.roll2)
         self.textAfterRoll = self.textFont.render("Your roll: " + self.rollstr, True, BLACK, WHITE)
         self.textAfterRect = self.textAfterRoll.get_rect()
         self.buttonRect = (120, 260, 125, 45)

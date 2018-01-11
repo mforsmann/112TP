@@ -8,8 +8,8 @@ from humanplayer import HumanPlayer
 from aiplayer import AIPlayer
 from stone import Stone
 from dice import Dice
-WHITE = (0, 0, 0)
-BLACK = (255, 255, 255)
+WHITE = (255,255,255)
+BLACK = (0,0,0)
 
 class GameState(Enum):
     INITIAL_ROLL = 1
@@ -61,7 +61,7 @@ class BackgammonGame(object):
         #draw roll button
         screen.fill((255,255,255), self.dice.buttonRect)
         pygame.draw.rect(screen, (0,0,0), self.dice.buttonRect, 2)
-        if self.dice.getRoll() == []:
+        if self.dice.getRoll() == [None, None]:
             (self.dice.textBeforeRect.centerx,self.dice.textBeforeRect.centery) = self.dice.buttonCenter
             screen.blit(self.dice.textBeforeRoll, self.dice.textBeforeRect)
         else:
@@ -70,9 +70,28 @@ class BackgammonGame(object):
         
         #draw possible moves (if any)
         for move in self.possibleMoves:
-            screen.blit(move.image, move.imgRect)
+            screen.blit(move.image, move.rect)
         
-        #indicate board state
+        #update/indicate board state message
+        if self.gameState == GameState.INITIAL_ROLL:
+            self.gsMessage = "Initial Roll"
+        elif self.gameState == GameState.WHITE_TO_ROLL:
+            self.gsMessage = "White to Roll Dice"
+        elif self.gameState == GameState.WHITE_TO_SELECT:
+            self.gsMessage = "White to Select a Piece"
+        elif self.gameState == GameState.WHITE_TO_MOVE:
+            self.gsMessage = "White to Select a Move"
+        elif self.gameState == GameState.BLACK_TO_ROLL:
+            self.gsMessage = "Black to Roll Dice"
+        elif self.gameState == GameState.BLACK_TO_SELECT:
+            self.gsMessage = "Black to Select a Piece"
+        elif self.gameState == GameState.BLACK_TO_MOVE:
+            self.gsMessage = "Black to Select a Move"
+        elif self.gameState == GameState.GAME_OVER:
+            self.gsMessage = "Game Over"
+        self.gsText = self.textFont.render(self.gsMessage, True, WHITE, BLACK)
+        self.gsRect = self.gsText.get_rect()
+        (self.gsRect.centerx, self.gsRect.centery) = (self.width//2, self.margin//2)
         screen.blit(self.gsText, self.gsRect)
 
     def isKeyPressed(self, key):
@@ -88,32 +107,19 @@ class BackgammonGame(object):
         self.fps = fps
         self.title = title
         self.bgColor = (255, 255, 255)
-        self.gameState = GameState.INITIAL_ROLL
         self.boardImage = pygame.image.load("board.png")
         self.boardRect = self.boardImage.get_rect()
         self.margin = 30
         self.xcoords = [800, 738, 676, 613, 550, 485, 373, 308, 247, 182, 121, 60, 60, 121, 182, 247, 308, 373, 485, 550, 613, 676, 738, 800]
         self.isGameOver = False
-        self.textFont = pygame.font.SysFont('calibri',12, bold=False, italic=False)
-        self.possibleMoves = []
+        self.textFont = pygame.font.SysFont('calibri',12, bold=True, italic=False)
+        self.selected = None
+        self.possibleMoves=[]
         self.dice = Dice()
 
-        if self.gameState == GameState.INITIAL_ROLL:
-            self.gsText = self.textFont.render("Initial Roll", 10, BLACK)
-        elif self.gameState == GameState.WHITE_TO_ROLL:
-            self.gsText = self.textFont.render("White to Roll Dice", 10, BLACK)
-        elif self.gameState == GameState.WHITE_TO_SELECT:
-            self.gsText = self.textFont.render("White to Select a Piece", 10, BLACK)
-        elif self.gameState == GameState.WHITE_TO_MOVE:
-            self.gsText = self.textFont.render("White to Select a Move", 10, BLACK)
-        elif self.gameState == GameState.BLACK_TO_ROLL:
-            self.gsText = self.textFont.render("Black to Roll Dice", 10, BLACK)
-        elif self.gameState == GameState.BLACK_TO_SELECT:
-            self.gsText = self.textFont.render("Black to Select a Piece", 10, BLACK)
-        elif self.gameState == GameState.BLACK_TO_MOVE:
-            self.gsText = self.textFont.render("Black to Select a Move", 10, BLACK)
-        elif self.gameState == GameState.GAME_OVER:
-            self.gsText = self.textFont.render("Game Over", 10, BLACK)
+        self.gameState = GameState.INITIAL_ROLL
+        self.gsMessage = "Initial Roll"
+        self.gsText = self.textFont.render(self.gsMessage, True, WHITE, BLACK)
         self.gsRect = self.gsText.get_rect()
         (self.gsRect.centerx, self.gsRect.centery) = (self.width//2, self.margin//2)
 
@@ -144,9 +150,11 @@ class BackgammonGame(object):
                         (x, y) = (event.pos)
                         if self.dice.buttonRect[0] <= x <= self.dice.buttonRect[0]+self.dice.buttonRect[2] and\
                            self.dice.buttonRect[1] <= y <= self.dice.buttonRect[1]+self.dice.buttonRect[3]:
-                            if self.dice.isRolled == False:
-                                self.dice.roll()
-                                self.gameState = GameState.WHITE_TO_SELECT
+                            #if self.dice.isRolled == False:
+                            self.dice.roll()
+                            for stone in self.player1.movableStones:
+                                stone.possibleMoves = []
+                            self.gameState = GameState.WHITE_TO_SELECT
 
                 elif self.gameState == GameState.WHITE_TO_SELECT:
                     # white selects a piece to move (mouse click on a piece) - legal
@@ -157,10 +165,25 @@ class BackgammonGame(object):
                             for stone in self.player1.movableStones:
                                 if stone.rect.x <= x <= stone.rect.x + stone.diameter and\
                                 stone.rect.y <= y <= stone.rect.y + stone.diameter:
+                                    self.selected = stone
                                     self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player2.stones)
                                     for move in self.possibleMoves:
                                         move.position(self.xcoords)
-                            self.gameState = GameState.WHITE_TO_MOVE
+
+                        #self.gameState = GameState.WHITE_TO_MOVE -- handle later
+                        if self.selected.possibleMoves != []:
+                            for move in self.selected.possibleMoves:
+                                if move.rect.x <= x <= move.rect.x + move.rect.width and\
+                                move.rect.y <= y <= move.rect.y + move.rect.height:
+                                    moved = abs(move.location - self.selected.location)
+                                    if self.dice.roll1 == moved:
+                                        self.dice.roll1 = None
+                                    elif self.dice.roll2 == moved:
+                                        self.dice.roll2 = None
+                                    self.dice.rollstr = str(self.dice.roll1) + ", " + str(self.dice.roll2)
+                                    self.selected.location = move.location
+                                    if self.dice.roll == []:
+                                        self.gameState = GameState.BLACK_TO_ROLL
 
                 elif self.gameState == GameState.WHITE_TO_MOVE:
                     # white clicks on a highlighted point, selected piece moves there
@@ -170,17 +193,19 @@ class BackgammonGame(object):
                     self.dice.isRolled = False
                     # black rolls dice (mouse click on roll button)
                     if event.type == pygame.MOUSEBUTTONUP:
-                        # white rolls dice (mouse click on roll button)
+                        self.possibleMoves = []
                         (x, y) = (event.pos)
                         if self.dice.buttonRect[0] <= x <= self.dice.buttonRect[0]+self.dice.buttonRect[2] and\
                            self.dice.buttonRect[1] <= y <= self.dice.buttonRect[1]+self.dice.buttonRect[3]:
                             self.dice.roll()
+                            for stone in self.player2.movableStones:
+                                stone.possibleMoves = []
                             self.gameState = GameState.BLACK_TO_SELECT
 
                 elif self.gameState == GameState.BLACK_TO_SELECT:
                     # black selects a piece to move (mouse click on a piece) - legal
                     # moves are highlighted points
-                    if event.type == pygame.MOUSEBUTTONUP:
+                    '''if event.type == pygame.MOUSEBUTTONUP:
                         (x, y) = (event.pos)
                         if self.player2.movableStones != []:
                             for stone in self.player2.movableStones:
@@ -189,7 +214,9 @@ class BackgammonGame(object):
                                     self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player1.stones)
                                     for move in self.possibleMoves:
                                         move.position(self.xcoords)
-                            self.gameState = GameState.WHITE_TO_MOVE
+                            #self.gameState = GameState.BLACK_TO_MOVE'''
+                            
+                    self.gameState = GameState.WHITE_TO_ROLL
 
                 elif self.gameState == GameState.BLACK_TO_MOVE:
                     # white clicks on a highlighted point, selected piece moves there
