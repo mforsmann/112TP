@@ -17,6 +17,10 @@ class Move(object):
             elif self.color == WHITE:
                 self.image = pygame.image.load("UpMove.png")
         self.rect = self.image.get_rect()
+    
+    def __repr__(self):
+        final = "Move to " + str(self.location)
+        return final
 
     def position(self, xcoords):
         if self.color == BLACK:

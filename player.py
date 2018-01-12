@@ -30,7 +30,8 @@ class Player(object):
     def drawStones(self):
         for stone in self.stones:
             stone.position(self.xcoords)
-        
+
+    def getMovable(self):
         for i in range(1,25):
             stonesAtPoint = 0
             highestStone = None

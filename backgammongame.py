@@ -48,8 +48,9 @@ class BackgammonGame(object):
         #draw board
         screen.blit(self.boardImage, (self.margin, self.margin))
 
-        #draw stones
+        #update movable stones and draw stones
         for player in (self.player1, self.player2):
+            player.getMovable()
             player.drawStones()
 
         for stone in self.player1.getStones():
@@ -179,6 +180,7 @@ class BackgammonGame(object):
                                     #update stone position
                                     moved = abs(move.location - self.selected.location)
                                     self.selected.location = move.location
+                                    self.player1.getMovable()
                                     self.possibleMoves = []
                                     
                                     #update unused dice
@@ -237,10 +239,11 @@ class BackgammonGame(object):
                                     #update stone position
                                     moved = abs(move.location - self.selected.location)
                                     self.selected.location = move.location
+                                    self.player2.getMovable()
                                     self.possibleMoves = []
 
                                     #update movable stones
-                                    
+
                                     #update unused dice
                                     if moved in self.dice.rollValues:
                                         self.dice.rollValues.remove(moved)
