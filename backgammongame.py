@@ -1,5 +1,4 @@
 import pygame, sys
-from pygame.locals import * 
 import math
 import random
 from enum import Enum
@@ -180,25 +179,18 @@ class BackgammonGame(object):
                                     #update stone position
                                     moved = abs(move.location - self.selected.location)
                                     self.selected.location = move.location
-                                    for stone in self.player1.movableStones:
-                                        stone.possibleMoves = []
-                                    #self.selected.possibleMoves = []
+                                    self.possibleMoves = []
                                     
                                     #update unused dice
                                     if moved in self.dice.rollValues:
                                         self.dice.rollValues.remove(moved)
-                                        #self.selected.possibleMoves.remove(move)
-                                    elif moved not in self.dice.rollValues:
-                                        self.dice.rollValues = []
-                                    #self.selected.possibleMoves = []
-
+                                    
                                     #update dice roll
                                     if self.dice.rollValues != []:
                                         self.dice.rollstr = str(self.dice.rollValues[0])
                                     self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
                                     self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
-                                    #self.selected.location = move.location
-                                    self.selected.possibleMoves = []
+
                                     if self.dice.rollValues == []:
                                         self.gameState = GameState.BLACK_TO_ROLL
 
@@ -210,6 +202,7 @@ class BackgammonGame(object):
                     for stone in self.player1.stones:
                         stone.possibleMoves = []
                     self.dice.isRolled = False
+
                     # black rolls dice (mouse click on roll button)
                     if event.type == pygame.MOUSEBUTTONUP:
                         self.possibleMoves = []
@@ -244,25 +237,19 @@ class BackgammonGame(object):
                                     #update stone position
                                     moved = abs(move.location - self.selected.location)
                                     self.selected.location = move.location
-                                    for stone in self.player1.movableStones:
-                                        stone.possibleMoves = []
-                                    #self.selected.possibleMoves = []
+                                    self.possibleMoves = []
+
+                                    #update movable stones
                                     
                                     #update unused dice
                                     if moved in self.dice.rollValues:
                                         self.dice.rollValues.remove(moved)
-                                        #self.selected.possibleMoves.remove(move)
-                                    elif moved not in self.dice.rollValues:
-                                        self.dice.rollValues = []
-                                    #self.selected.possibleMoves = []
 
                                     #update dice roll
                                     if self.dice.rollValues != []:
                                         self.dice.rollstr = str(self.dice.rollValues[0])
                                     self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
                                     self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
-                                    #self.selected.location = move.location
-                                    self.selected.possibleMoves = []
                                     if self.dice.rollValues == []:
                                         self.gameState = GameState.WHITE_TO_ROLL
 

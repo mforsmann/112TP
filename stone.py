@@ -44,7 +44,8 @@ class Stone(object):
                 newMove = Move(newLocation, self.color)
                 self.possibleMoves.append(newMove)
 
-        # taking combination of rolls
+        # taking combination of rolls - obsolete
+        '''
         totalMoveLocation = self.location + total
         opponentStonesPresent = 0
         for stone in opponentStones:
@@ -53,6 +54,6 @@ class Stone(object):
 
         if opponentStonesPresent <= 1 and totalMoveLocation < 25:
             newMove = Move(totalMoveLocation, self.color)
-            self.possibleMoves.append(newMove)
+            self.possibleMoves.append(newMove)'''
        
         return self.possibleMoves
