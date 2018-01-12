@@ -199,7 +199,7 @@ class BackgammonGame(object):
                                     self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
                                     #self.selected.location = move.location
                                     self.selected.possibleMoves = []
-                                    if self.dice.roll == []:
+                                    if self.dice.rollValues == []:
                                         self.gameState = GameState.BLACK_TO_ROLL
 
                 elif self.gameState == GameState.WHITE_TO_MOVE:
@@ -224,18 +224,47 @@ class BackgammonGame(object):
                 elif self.gameState == GameState.BLACK_TO_SELECT:
                     # black selects a piece to move (mouse click on a piece) - legal
                     # moves are highlighted points
-                    '''if event.type == pygame.MOUSEBUTTONUP:
+                    if event.type == pygame.MOUSEBUTTONUP:
                         (x, y) = (event.pos)
                         if self.player2.movableStones != []:
                             for stone in self.player2.movableStones:
                                 if stone.rect.x <= x <= stone.rect.x + stone.diameter and\
                                 stone.rect.y <= y <= stone.rect.y + stone.diameter:
+                                    self.selected = stone
+                                    self.possibleMoves = []
                                     self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player1.stones)
                                     for move in self.possibleMoves:
                                         move.position(self.xcoords)
-                            #self.gameState = GameState.BLACK_TO_MOVE'''
-                            
-                    self.gameState = GameState.WHITE_TO_ROLL
+
+                        #if a point is selected to move the selected piece to, move the piece there and clear highlights
+                        if self.selected != None and self.selected.possibleMoves != []:
+                            for move in self.selected.possibleMoves:
+                                if move.rect.x <= x <= move.rect.x + move.rect.width and\
+                                move.rect.y <= y <= move.rect.y + move.rect.height:
+                                    #update stone position
+                                    moved = abs(move.location - self.selected.location)
+                                    self.selected.location = move.location
+                                    for stone in self.player1.movableStones:
+                                        stone.possibleMoves = []
+                                    #self.selected.possibleMoves = []
+                                    
+                                    #update unused dice
+                                    if moved in self.dice.rollValues:
+                                        self.dice.rollValues.remove(moved)
+                                        #self.selected.possibleMoves.remove(move)
+                                    elif moved not in self.dice.rollValues:
+                                        self.dice.rollValues = []
+                                    #self.selected.possibleMoves = []
+
+                                    #update dice roll
+                                    if self.dice.rollValues != []:
+                                        self.dice.rollstr = str(self.dice.rollValues[0])
+                                    self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
+                                    self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
+                                    #self.selected.location = move.location
+                                    self.selected.possibleMoves = []
+                                    if self.dice.rollValues == []:
+                                        self.gameState = GameState.WHITE_TO_ROLL
 
                 elif self.gameState == GameState.BLACK_TO_MOVE:
                     # white clicks on a highlighted point, selected piece moves there

@@ -7,23 +7,29 @@ class Move(object):
         self.location = location
         self.color = color
         if self.location >= 13:
-            self.image = pygame.image.load("UpMove.png")
+            if self.color == BLACK:
+                self.image = pygame.image.load("UpMove.png")
+            elif self.color == WHITE:
+                self.image = pygame.image.load("DownMove.png")
         else:
-            self.image = pygame.image.load("DownMove.png")
+            if self.color == BLACK:
+                self.image = pygame.image.load("DownMove.png")
+            elif self.color == WHITE:
+                self.image = pygame.image.load("UpMove.png")
         self.rect = self.image.get_rect()
 
     def position(self, xcoords):
-        if self.color == WHITE:
+        if self.color == BLACK:
             self.rect.centerx = xcoords[self.location-1]
             
             if self.location < 13:
                 self.rect.y = 30
             else:
                 self.rect.y = 300
-        elif self.color == BLACK:
+        elif self.color == WHITE:
             self.rect.centerx = xcoords[self.location - 1]
 
             if self.location >= 13:
-                self.rect.y = 300
-            else:
                 self.rect.y = 30
+            else:
+                self.rect.y = 300
