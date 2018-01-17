@@ -7,8 +7,9 @@ from humanplayer import HumanPlayer
 from aiplayer import AIPlayer
 from stone import Stone
 from dice import Dice
-WHITE = (255,255,255)
-BLACK = (0,0,0)
+
+WHITE = (0,0,0)
+BLACK = (255,255,255)
 
 class GameState(Enum):
     INITIAL_ROLL = 1
@@ -134,8 +135,7 @@ class BackgammonGame(object):
         self._keys = dict()
 
         # call game-specific initialization
-        #self.init()
-        self.gameState = GameState.WHITE_TO_ROLL
+        self.gameState = GameState.BLACK_TO_ROLL
         playing = True
         while playing:
             for event in pygame.event.get():
@@ -170,6 +170,7 @@ class BackgammonGame(object):
                                     self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player2.stones)
                                     for move in self.possibleMoves:
                                         move.position(self.xcoords)
+                                        
 
                         #self.gameState = GameState.WHITE_TO_MOVE -- handle later
                         #if a point is selected to move the selected piece to, move the piece there and clear highlights
@@ -182,10 +183,17 @@ class BackgammonGame(object):
                                     self.selected.location = move.location
                                     self.player1.getMovable()
                                     self.possibleMoves = []
-                                    
+
+                                    #take enemy pieces at move location
+                                    for stone in self.player2.stones:
+                                        if stone.location == 25 - move.location:
+                                            stone.location = 0
+                                            self.player2.restrict = True
+                                
                                     #update unused dice
                                     if moved in self.dice.rollValues:
                                         self.dice.rollValues.remove(moved)
+                                        self.player1.getMovable()
                                     
                                     #update dice roll
                                     if self.dice.rollValues != []:
@@ -220,6 +228,7 @@ class BackgammonGame(object):
                     # black selects a piece to move (mouse click on a piece) - legal
                     # moves are highlighted points
                     if event.type == pygame.MOUSEBUTTONUP:
+                        self.player2.getMovable()
                         (x, y) = (event.pos)
                         if self.player2.movableStones != []:
                             for stone in self.player2.movableStones:
@@ -238,15 +247,14 @@ class BackgammonGame(object):
                                 move.rect.y <= y <= move.rect.y + move.rect.height:
                                     #update stone position
                                     moved = abs(move.location - self.selected.location)
-                                    self.selected.location = move.location
+                                    self.selected.location += moved
                                     self.player2.getMovable()
                                     self.possibleMoves = []
-
-                                    #update movable stones
 
                                     #update unused dice
                                     if moved in self.dice.rollValues:
                                         self.dice.rollValues.remove(moved)
+                                        self.player2.getMovable()
 
                                     #update dice roll
                                     if self.dice.rollValues != []:
@@ -273,8 +281,7 @@ class BackgammonGame(object):
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-WHITE = (0,0,0)
-BLACK = (255,255,255)
+
 
 def main():
     player1 = Player(WHITE)

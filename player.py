@@ -9,6 +9,7 @@ class Player(object):
         self.stones = []
         self.movableStones = set()
         self.color = color
+        self.restrict = False
         #configuring initial positions of stones per game logic
         for i in range(2):
             newStone = Stone(self.color, 1)
@@ -31,13 +32,10 @@ class Player(object):
         for stone in self.stones:
             stone.position(self.xcoords)
 
-    def getMovable(self):
         for i in range(1,25):
             stonesAtPoint = 0
-            highestStone = None
             for stone in self.stones:
                 if stone.location == i:
-                    highestStone = stone
                     if stone.color == WHITE:
                         if stone.location < 13:
                             stone.rect.y = (stonesAtPoint)*stone.diameter + 30
@@ -48,6 +46,34 @@ class Player(object):
                             stone.rect.y = 530 - ((stonesAtPoint+1)*stone.diameter)
                         else:
                             stone.rect.y = (stonesAtPoint)*stone.diameter + 30
+                    stonesAtPoint += 1
+
+
+    def getMovable(self):
+        for stone in self.stones:
+            if stone.location == 0:
+                self.movableStones.add(stone)
+        
+        #if any stones on bar, they are the only movable ones
+        # if len(self.movableStones) > 0:
+        #     return self.movableStones
+
+        for i in range(0,25):
+            stonesAtPoint = 0
+            highestStone = None
+            for stone in self.stones:
+                if stone.location == i:
+                    highestStone = stone
+                    # if stone.color == WHITE:
+                    #     if stone.location < 13:
+                    #         stone.rect.y = (stonesAtPoint)*stone.diameter + 30
+                    #     else:
+                    #         stone.rect.y = 530 - ((stonesAtPoint+1)*stone.diameter)
+                    # elif stone.color == BLACK:
+                    #     if stone.location < 13:
+                    #         stone.rect.y = 530 - ((stonesAtPoint+1)*stone.diameter)
+                    #     else:
+                    #         stone.rect.y = (stonesAtPoint)*stone.diameter + 30
                     stonesAtPoint += 1
             if highestStone != None:
                 self.movableStones.add(highestStone)

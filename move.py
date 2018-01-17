@@ -1,6 +1,8 @@
 import pygame
-WHITE = (255,255,255)
+
 BLACK = (0,0,0)
+WHITE = (255,255,255)
+
 
 class Move(object):
     def __init__(self, location, color):
@@ -23,17 +25,18 @@ class Move(object):
         return final
 
     def position(self, xcoords):
-        if self.color == BLACK:
-            self.rect.centerx = xcoords[self.location-1]
-            
-            if self.location < 13:
-                self.rect.y = 30
-            else:
-                self.rect.y = 300
-        elif self.color == WHITE:
-            self.rect.centerx = xcoords[self.location - 1]
+        if 0 < self.location  and self.location <= len(xcoords) - 1:
+            if self.color == BLACK:
+                self.rect.centerx = xcoords[self.location-1]
+                
+                if self.location < 13:
+                    self.rect.y = 30
+                else:
+                    self.rect.y = 300
+            elif self.color == WHITE:
+                self.rect.centerx = xcoords[self.location-1]
 
-            if self.location >= 13:
-                self.rect.y = 30
-            else:
-                self.rect.y = 300
+                if self.location >= 13:
+                    self.rect.y = 30
+                else:
+                    self.rect.y = 300
