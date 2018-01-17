@@ -25,7 +25,7 @@ class Move(object):
         return final
 
     def position(self, xcoords):
-        if 0 < self.location  and self.location <= len(xcoords) - 1:
+        if 0 < self.location  and self.location <= len(xcoords):
             if self.color == BLACK:
                 self.rect.centerx = xcoords[self.location-1]
                 

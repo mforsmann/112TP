@@ -247,9 +247,23 @@ class BackgammonGame(object):
                                 move.rect.y <= y <= move.rect.y + move.rect.height:
                                     #update stone position
                                     moved = abs(move.location - self.selected.location)
-                                    self.selected.location += moved
+                                    if move.location < 25:
+                                        self.selected.location = move.location
+                                    elif move.location == 25:
+                                        for stone in self.player2.stones:
+                                            if stone.location < 18:
+                                                break
+                                            else:
+                                                self.selected.location = move.location
+
                                     self.player2.getMovable()
                                     self.possibleMoves = []
+
+                                    #take enemy pieces at move location
+                                    for stone in self.player1.stones:
+                                        if stone.location == 25 - move.location:
+                                            stone.location = 0
+                                            self.player1.restrict = True
 
                                     #update unused dice
                                     if moved in self.dice.rollValues:

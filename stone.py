@@ -22,14 +22,17 @@ class Stone(object):
         return final
 
     def position(self, xcoords):
-        try:
+        if self.location == 0:
+            self.rect.x = 430 - 0.5 * self.diameter
+            
+        else:
             if self.color == WHITE:
                 self.rect.x = xcoords[self.location - 1] - 0.5*self.diameter
                 
             elif self.color == BLACK:
                 self.rect.x = xcoords[25 - self.location - 1] - 0.5*self.diameter
-        except:
-            self.rect.x = 430 - 0.5 * self.diameter
+        
+            
     
     def getPossibleMoves(self, rollValues, opponentStones):
         # taking each die roll separately
