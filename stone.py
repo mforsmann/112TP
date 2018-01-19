@@ -24,7 +24,7 @@ class Stone(object):
     def position(self, xcoords):
         if self.location == 0:
             self.rect.x = 430 - 0.5 * self.diameter
-            
+
         else:
             if self.color == WHITE:
                 self.rect.x = xcoords[self.location - 1] - 0.5*self.diameter
@@ -49,7 +49,7 @@ class Stone(object):
             
             if opponentStonesPresent <= 1:
                 newMove = Move(newLocation, self.color)
-                self.possibleMoves.append(newMove)
-
+                if newMove not in self.possibleMoves:
+                    self.possibleMoves.append(newMove)
        
         return self.possibleMoves

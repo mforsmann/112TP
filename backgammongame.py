@@ -15,11 +15,9 @@ class GameState(Enum):
     INITIAL_ROLL = 1
     WHITE_TO_ROLL = 2
     WHITE_TO_SELECT = 3
-    WHITE_TO_MOVE = 4
-    BLACK_TO_ROLL = 5
-    BLACK_TO_SELECT = 6
-    BLACK_TO_MOVE = 7
-    GAME_OVER = 8
+    BLACK_TO_ROLL = 4
+    BLACK_TO_SELECT = 5
+    GAME_OVER = 6
 
 
 class BackgammonGame(object):
@@ -69,7 +67,7 @@ class BackgammonGame(object):
             (self.dice.textAfterRect.centerx, self.dice.textAfterRect.centery) = self.dice.buttonCenter
             screen.blit(self.dice.textAfterRoll, self.dice.textAfterRect)
         
-        #draw possible moves (if any)
+        #draw possible moves
         for move in self.possibleMoves:
             screen.blit(move.image, move.rect)
         
@@ -80,16 +78,16 @@ class BackgammonGame(object):
             self.gsMessage = "White to Roll Dice"
         elif self.gameState == GameState.WHITE_TO_SELECT:
             self.gsMessage = "White to Select a Piece"
-        elif self.gameState == GameState.WHITE_TO_MOVE:
-            self.gsMessage = "White to Select a Move"
         elif self.gameState == GameState.BLACK_TO_ROLL:
             self.gsMessage = "Black to Roll Dice"
         elif self.gameState == GameState.BLACK_TO_SELECT:
             self.gsMessage = "Black to Select a Piece"
-        elif self.gameState == GameState.BLACK_TO_MOVE:
-            self.gsMessage = "Black to Select a Move"
         elif self.gameState == GameState.GAME_OVER:
-            self.gsMessage = "Game Over"
+            if self.player1.victory == True:
+                self.gsMessage = "Game Over - Player 1 Wins"
+            elif self.player2.victory == True:
+                self.gsMessage = "Game Over - Player 2 Wins"
+                
         self.gsText = self.textFont.render(self.gsMessage, True, WHITE, BLACK)
         self.gsRect = self.gsText.get_rect()
         (self.gsRect.centerx, self.gsRect.centery) = (self.width//2, self.margin//2)
@@ -170,10 +168,19 @@ class BackgammonGame(object):
                                     self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player2.stones)
                                     for move in self.possibleMoves:
                                         move.position(self.xcoords)
-                                        
 
                         #self.gameState = GameState.WHITE_TO_MOVE -- handle later
                         #if a point is selected to move the selected piece to, move the piece there and clear highlights
+                        
+                        #check if no movable stones have possible moves - if so, update gameState
+                        immobile = 0
+                        for stone in self.player1.movableStones:
+                            if stone.getPossibleMoves(self.dice.rollValues, self.player2.stones) == []:
+                                immobile += 1
+                        if len(self.player1.movableStones) == immobile:
+                            self.gameState = GameState.BLACK_TO_ROLL
+                        
+                        #make move
                         if self.selected != None and self.selected.possibleMoves != []:
                             for move in self.selected.possibleMoves:
                                 if move.rect.x <= x <= move.rect.x + move.rect.width and\
@@ -204,9 +211,15 @@ class BackgammonGame(object):
                                     if self.dice.rollValues == []:
                                         self.gameState = GameState.BLACK_TO_ROLL
 
-                elif self.gameState == GameState.WHITE_TO_MOVE:
-                    # white clicks on a highlighted point, selected piece moves there
-                    self.gameState = GameState.BLACK_TO_ROLL
+                                    #check for win condition
+                                    home = 0
+                                    for stone in self.player1.stones:
+                                        if stone.location >= 19:
+                                            home += 1
+                                    if home == len(self.player1.stones):
+                                        self.player1.victory = True
+                                        self.gameState = GameState.GAME_OVER
+                                
 
                 elif self.gameState == GameState.BLACK_TO_ROLL:
                     for stone in self.player1.stones:
@@ -215,7 +228,7 @@ class BackgammonGame(object):
 
                     # black rolls dice (mouse click on roll button)
                     if event.type == pygame.MOUSEBUTTONUP:
-                        self.possibleMoves = []
+                        #self.possibleMoves = []
                         (x, y) = (event.pos)
                         if self.dice.buttonRect[0] <= x <= self.dice.buttonRect[0]+self.dice.buttonRect[2] and\
                            self.dice.buttonRect[1] <= y <= self.dice.buttonRect[1]+self.dice.buttonRect[3]:
@@ -240,22 +253,23 @@ class BackgammonGame(object):
                                     for move in self.possibleMoves:
                                         move.position(self.xcoords)
 
-                        #if a point is selected to move the selected piece to, move the piece there and clear highlights
+                        #check if no movable stones have possible moves - if so, update gameState
+                        immobile = 0
+                        for stone in self.player2.movableStones:
+                            if stone.getPossibleMoves(self.dice.rollValues, self.player1.stones) == []:
+                                immobile += 1
+                        if len(self.player1.movableStones) == immobile:
+                            self.gameState = GameState.WHITE_TO_ROLL
+
+                        #make move
                         if self.selected != None and self.selected.possibleMoves != []:
                             for move in self.selected.possibleMoves:
                                 if move.rect.x <= x <= move.rect.x + move.rect.width and\
                                 move.rect.y <= y <= move.rect.y + move.rect.height:
+
                                     #update stone position
                                     moved = abs(move.location - self.selected.location)
-                                    if move.location < 25:
-                                        self.selected.location = move.location
-                                    elif move.location == 25:
-                                        for stone in self.player2.stones:
-                                            if stone.location < 18:
-                                                break
-                                            else:
-                                                self.selected.location = move.location
-
+                                    self.selected.location = move.location
                                     self.player2.getMovable()
                                     self.possibleMoves = []
 
@@ -277,13 +291,16 @@ class BackgammonGame(object):
                                     self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
                                     if self.dice.rollValues == []:
                                         self.gameState = GameState.WHITE_TO_ROLL
+                                        
+                                    #check for win condition
+                                    home = 0
+                                    for stone in self.player2.stones:
+                                        if stone.location >= 19:
+                                            home += 1
+                                    if home == len(self.player2.stones):
+                                        self.player2.victory = True
+                                        self.gameState = GameState.GAME_OVER
 
-                elif self.gameState == GameState.BLACK_TO_MOVE:
-                    # white clicks on a highlighted point, selected piece moves there
-                    if self.isGameOver == True:
-                        self.gameState = GameState.GAME_OVER
-                    else:
-                        self.gameState = GameState.WHITE_TO_ROLL
 
                 elif self.gameState == GameState.GAME_OVER:
                     # winner is displayed, user clicks a restart button to play again

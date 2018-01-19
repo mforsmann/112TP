@@ -1,5 +1,6 @@
 import pygame
 from stone import Stone
+from move import Move
 WHITE = (0, 0, 0)
 BLACK = (255, 255, 255)
 
@@ -10,6 +11,7 @@ class Player(object):
         self.movableStones = set()
         self.color = color
         self.restrict = False
+        self.victory = False
         #configuring initial positions of stones per game logic
         for i in range(2):
             newStone = Stone(self.color, 1)
@@ -78,3 +80,19 @@ class Player(object):
             if highestStone != None:
                 self.movableStones.add(highestStone)
             stonesAtPoint = 0
+    
+    def moveHome(self, rollValues):
+        #if all pieces are at position >= 18
+        for stone in self.stones:
+            if stone.location <= 18:
+                return None
+
+        #position 25 becomes a legal move 
+        #if any pieces are present at a point whose location is indicated by a dice roll, 
+        #those moves are the only legal ones
+        for value in rollValues:
+            for stone in self.movableStones:
+                if 25 - value == stone.location:
+                    newLocation = stone.location + value
+                    newMove = Move(newLocation)
+                    stone.possibleMoves.add(newMove)

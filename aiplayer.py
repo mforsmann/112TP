@@ -1,5 +1,12 @@
 from player import Player
+from move import Move
+import random
 
-class AIPlayer(Player):
-    def __init__(self):
-        pass
+class RandomAI(Player):
+    def __init__(self, color):
+        super.__init__(color)
+
+    def makeMove(self, possibleMoves):
+        move = random.choice(possibleMoves)
+        return move
+
