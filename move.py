@@ -27,7 +27,7 @@ class Move(object):
         
     
     def __repr__(self):
-        final = "Move to " + str(self.location)
+        final = "Move to " + str(self.location) 
         return final
 
     def position(self, xcoords):

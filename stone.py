@@ -47,7 +47,7 @@ class Stone(object):
                 if 25 - stone.location == newLocation:
                     opponentStonesPresent += 1
             
-            if opponentStonesPresent <= 1:
+            if opponentStonesPresent <= 1 and newLocation <= 24:
                 newMove = Move(newLocation, self.color)
                 if newMove not in self.possibleMoves:
                     self.possibleMoves.append(newMove)

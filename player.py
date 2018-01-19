@@ -96,3 +96,16 @@ class Player(object):
                     newLocation = stone.location + value
                     newMove = Move(newLocation)
                     stone.possibleMoves.add(newMove)
+
+    def diceRoll(self, dice):
+        dice.roll()
+        for stone in self.movableStones:
+            stone.possibleMoves = []
+    
+    def checkMovable(self, rollVals, opponentStones):
+        immobile = 0
+        for stone in self.movableStones:
+            if stone.getPossibleMoves(rollVals, opponentStones) == []:
+                immobile += 1
+        if len(self.movableStones) == immobile:
+            return True

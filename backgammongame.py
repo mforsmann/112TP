@@ -4,7 +4,7 @@ import random
 from enum import Enum
 from player import Player
 from humanplayer import HumanPlayer
-from aiplayer import AIPlayer
+from aiplayer import RandomAI
 from stone import Stone
 from dice import Dice
 
@@ -26,7 +26,142 @@ class BackgammonGame(object):
         pass
 
     def mouseReleased(self, x, y):
-        pass
+        if self.gameState == GameState.WHITE_TO_ROLL:
+            # white rolls dice (mouse click on roll button)
+            #(x, y) = (event.pos)
+            if self.dice.buttonRect[0] <= x <= self.dice.buttonRect[0]+self.dice.buttonRect[2] and\
+                self.dice.buttonRect[1] <= y <= self.dice.buttonRect[1]+self.dice.buttonRect[3]:
+                self.player1.diceRoll(self.dice)
+                self.gameState = GameState.WHITE_TO_SELECT
+
+        elif self.gameState == GameState.WHITE_TO_SELECT:
+
+            # white selects a piece to move (mouse click on a piece) - legal
+            # moves are highlighted points
+            if self.player1.movableStones != []:
+                for stone in self.player1.movableStones:
+                    if stone.rect.x <= x <= stone.rect.x + stone.diameter and\
+                    stone.rect.y <= y <= stone.rect.y + stone.diameter:
+                        self.selected = stone
+                        self.possibleMoves = []
+                        self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player2.stones)
+                        for move in self.possibleMoves:
+                            move.position(self.xcoords)
+                
+            #check if no movable stones have possible moves - if so, update gameState
+            immobilized = self.player1.checkMovable(self.dice.rollValues, self.player2.stones)
+            if immobilized == True:
+                self.gameState = GameState.BLACK_TO_ROLL
+
+            #make move
+            if self.selected != None and self.selected.possibleMoves != []:
+                for move in self.selected.possibleMoves:
+                    if move.rect.x <= x <= move.rect.x + move.rect.width and\
+                    move.rect.y <= y <= move.rect.y + move.rect.height:
+                        #update stone position
+                        moved = abs(move.location - self.selected.location)
+                        self.selected.location = move.location
+                        self.player1.getMovable()
+                        self.possibleMoves = []
+
+                        #take enemy pieces at move location
+                        for stone in self.player2.stones:
+                            if stone.location == 25 - move.location:
+                                stone.location = 0
+                                self.player2.restrict = True
+                    
+                        #update unused dice
+                        if moved in self.dice.rollValues:
+                            self.dice.rollValues.remove(moved)
+                            self.player1.getMovable()
+                        
+                        #update dice roll
+                        if self.dice.rollValues != []:
+                            self.dice.rollstr = str(self.dice.rollValues[0])
+                        self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
+                        self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
+
+                        if self.dice.rollValues == []:
+                            self.gameState = GameState.BLACK_TO_ROLL
+
+                        #check for win condition
+                        home = 0
+                        for stone in self.player1.stones:
+                            if stone.location >= 19:
+                                home += 1
+                        if home == len(self.player1.stones):
+                            self.player1.victory = True
+                            self.gameState = GameState.GAME_OVER
+                                
+        elif self.gameState == GameState.BLACK_TO_ROLL:
+            # white rolls dice (mouse click on roll button)
+            #(x, y) = (event.pos)
+            if self.dice.buttonRect[0] <= x <= self.dice.buttonRect[0]+self.dice.buttonRect[2] and\
+                self.dice.buttonRect[1] <= y <= self.dice.buttonRect[1]+self.dice.buttonRect[3]:
+                self.player2.diceRoll(self.dice)
+                self.gameState = GameState.BLACK_TO_SELECT
+
+        elif self.gameState == GameState.BLACK_TO_SELECT:
+            # black selects a piece to move (mouse click on a piece) - legal
+            # moves are highlighted points
+            self.player2.getMovable()
+            if self.player2.movableStones != []:
+                for stone in self.player2.movableStones:
+                    if stone.rect.x <= x <= stone.rect.x + stone.diameter and\
+                    stone.rect.y <= y <= stone.rect.y + stone.diameter:
+                        self.selected = stone
+                        self.possibleMoves = []
+                        self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player1.stones)
+                        for move in self.possibleMoves:
+                            move.position(self.xcoords)
+
+                #check if no movable stones have possible moves - if so, update gameState
+                immobile = 0
+                for stone in self.player2.movableStones:
+                    if stone.getPossibleMoves(self.dice.rollValues, self.player1.stones) == []:
+                        immobile += 1
+                if len(self.player1.movableStones) == immobile:
+                    self.gameState = GameState.WHITE_TO_ROLL
+
+                #make move
+                if self.selected != None and self.selected.possibleMoves != []:
+                    for move in self.selected.possibleMoves:
+                        if move.rect.x <= x <= move.rect.x + move.rect.width and\
+                        move.rect.y <= y <= move.rect.y + move.rect.height:
+
+                            #update stone position
+                            moved = abs(move.location - self.selected.location)
+                            self.selected.location = move.location
+                            self.player2.getMovable()
+                            self.possibleMoves = []
+
+                            #take enemy pieces at move location
+                            for stone in self.player1.stones:
+                                if stone.location == 25 - move.location:
+                                    stone.location = 0
+                                    self.player1.restrict = True
+
+                            #update unused dice
+                            if moved in self.dice.rollValues:
+                                self.dice.rollValues.remove(moved)
+                                self.player2.getMovable()
+
+                            #update dice roll
+                            if self.dice.rollValues != []:
+                                self.dice.rollstr = str(self.dice.rollValues[0])
+                            self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
+                            self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
+                            if self.dice.rollValues == []:
+                                self.gameState = GameState.WHITE_TO_ROLL
+                                
+                            #check for win condition
+                            home = 0
+                            for stone in self.player2.stones:
+                                if stone.location >= 19:
+                                    home += 1
+                            if home == len(self.player2.stones):
+                                self.player2.victory = True
+                                self.gameState = GameState.GAME_OVER
 
     def mouseMotion(self, x, y):
         pass
@@ -124,6 +259,7 @@ class BackgammonGame(object):
 
     def run(self):
 
+        #the following framework is from Lukas Peraza's pygame manual for 15-112 optional pygame lecture 11/11/15
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((self.width, self.height))
         # set the title of the window
@@ -136,187 +272,75 @@ class BackgammonGame(object):
         self.gameState = GameState.BLACK_TO_ROLL
         playing = True
         while playing:
-            for event in pygame.event.get():
-                if self.gameState == GameState.INITIAL_ROLL:
-                    # one die for black, one for white - highest roll takes first turn
-                    # roll used on first turn is the combined decision roll
-                    self.gameState = GameState.WHITE_TO_ROLL
+            time = clock.tick(self.fps)
+            self.timerFired(time)
 
-                elif self.gameState == GameState.WHITE_TO_ROLL:
+            #original code for game loop is mine
+            for event in pygame.event.get():
+                if self.gameState == GameState.WHITE_TO_ROLL:
                     if event.type == pygame.MOUSEBUTTONUP:
-                        # white rolls dice (mouse click on roll button)
-                        (x, y) = (event.pos)
-                        if self.dice.buttonRect[0] <= x <= self.dice.buttonRect[0]+self.dice.buttonRect[2] and\
-                           self.dice.buttonRect[1] <= y <= self.dice.buttonRect[1]+self.dice.buttonRect[3]:
-                            #if self.dice.isRolled == False:
-                            self.dice.roll()
-                            for stone in self.player1.movableStones:
-                                stone.possibleMoves = []
-                            self.gameState = GameState.WHITE_TO_SELECT
+                        self.mouseReleased(*(event.pos))
+                        self.dice.isRolled = False
 
                 elif self.gameState == GameState.WHITE_TO_SELECT:
-                    # white selects a piece to move (mouse click on a piece) - legal
-                    # moves are highlighted points
                     if event.type == pygame.MOUSEBUTTONUP:
-                        (x, y) = (event.pos)
-                        if self.player1.movableStones != []:
-                            for stone in self.player1.movableStones:
-                                if stone.rect.x <= x <= stone.rect.x + stone.diameter and\
-                                stone.rect.y <= y <= stone.rect.y + stone.diameter:
-                                    self.selected = stone
-                                    self.possibleMoves = []
-                                    self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player2.stones)
-                                    for move in self.possibleMoves:
-                                        move.position(self.xcoords)
-
-                        #self.gameState = GameState.WHITE_TO_MOVE -- handle later
-                        #if a point is selected to move the selected piece to, move the piece there and clear highlights
-                        
-                        #check if no movable stones have possible moves - if so, update gameState
-                        immobile = 0
-                        for stone in self.player1.movableStones:
-                            if stone.getPossibleMoves(self.dice.rollValues, self.player2.stones) == []:
-                                immobile += 1
-                        if len(self.player1.movableStones) == immobile:
-                            self.gameState = GameState.BLACK_TO_ROLL
-                        
-                        #make move
-                        if self.selected != None and self.selected.possibleMoves != []:
-                            for move in self.selected.possibleMoves:
-                                if move.rect.x <= x <= move.rect.x + move.rect.width and\
-                                move.rect.y <= y <= move.rect.y + move.rect.height:
-                                    #update stone position
-                                    moved = abs(move.location - self.selected.location)
-                                    self.selected.location = move.location
-                                    self.player1.getMovable()
-                                    self.possibleMoves = []
-
-                                    #take enemy pieces at move location
-                                    for stone in self.player2.stones:
-                                        if stone.location == 25 - move.location:
-                                            stone.location = 0
-                                            self.player2.restrict = True
-                                
-                                    #update unused dice
-                                    if moved in self.dice.rollValues:
-                                        self.dice.rollValues.remove(moved)
-                                        self.player1.getMovable()
-                                    
-                                    #update dice roll
-                                    if self.dice.rollValues != []:
-                                        self.dice.rollstr = str(self.dice.rollValues[0])
-                                    self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
-                                    self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
-
-                                    if self.dice.rollValues == []:
-                                        self.gameState = GameState.BLACK_TO_ROLL
-
-                                    #check for win condition
-                                    home = 0
-                                    for stone in self.player1.stones:
-                                        if stone.location >= 19:
-                                            home += 1
-                                    if home == len(self.player1.stones):
-                                        self.player1.victory = True
-                                        self.gameState = GameState.GAME_OVER
-                                
+                        self.mouseReleased(*(event.pos))
 
                 elif self.gameState == GameState.BLACK_TO_ROLL:
-                    for stone in self.player1.stones:
-                        stone.possibleMoves = []
-                    self.dice.isRolled = False
-
-                    # black rolls dice (mouse click on roll button)
-                    if event.type == pygame.MOUSEBUTTONUP:
-                        #self.possibleMoves = []
-                        (x, y) = (event.pos)
-                        if self.dice.buttonRect[0] <= x <= self.dice.buttonRect[0]+self.dice.buttonRect[2] and\
-                           self.dice.buttonRect[1] <= y <= self.dice.buttonRect[1]+self.dice.buttonRect[3]:
-                            self.dice.roll()
-                            for stone in self.player2.movableStones:
-                                stone.possibleMoves = []
+                    if isinstance(self.player2, RandomAI):
+                        if self.dice.isRolled == False:
+                            self.player2.diceRoll(self.dice)
                             self.gameState = GameState.BLACK_TO_SELECT
+                    else:
+                        if event.type == pygame.MOUSEBUTTONUP:
+                            self.mouseReleased(*(event.pos))
 
                 elif self.gameState == GameState.BLACK_TO_SELECT:
-                    # black selects a piece to move (mouse click on a piece) - legal
-                    # moves are highlighted points
-                    if event.type == pygame.MOUSEBUTTONUP:
-                        self.player2.getMovable()
-                        (x, y) = (event.pos)
-                        if self.player2.movableStones != []:
-                            for stone in self.player2.movableStones:
-                                if stone.rect.x <= x <= stone.rect.x + stone.diameter and\
-                                stone.rect.y <= y <= stone.rect.y + stone.diameter:
-                                    self.selected = stone
-                                    self.possibleMoves = []
-                                    self.possibleMoves = stone.getPossibleMoves(self.dice.rollValues, self.player1.stones)
-                                    for move in self.possibleMoves:
-                                        move.position(self.xcoords)
+                    if isinstance(self.player2, RandomAI):
+                        if event.type == pygame.KEYUP:
+                            self.player2.getMovable()
+                            self.player2.chooseStone()
 
-                        #check if no movable stones have possible moves - if so, update gameState
-                        immobile = 0
-                        for stone in self.player2.movableStones:
-                            if stone.getPossibleMoves(self.dice.rollValues, self.player1.stones) == []:
-                                immobile += 1
-                        if len(self.player1.movableStones) == immobile:
-                            self.gameState = GameState.WHITE_TO_ROLL
+                            #make move
+                            self.player2.chooseMove(self.player1, self.possibleMoves, self.dice.rollValues, self.player1.stones)
 
-                        #make move
-                        if self.selected != None and self.selected.possibleMoves != []:
-                            for move in self.selected.possibleMoves:
-                                if move.rect.x <= x <= move.rect.x + move.rect.width and\
-                                move.rect.y <= y <= move.rect.y + move.rect.height:
+                            #update unused dice
+                            if self.player2.moved in self.dice.rollValues:
+                                self.dice.rollValues.remove(self.player2.moved)
+                                self.player1.getMovable()
 
-                                    #update stone position
-                                    moved = abs(move.location - self.selected.location)
-                                    self.selected.location = move.location
-                                    self.player2.getMovable()
-                                    self.possibleMoves = []
+                            #update dice roll
+                            if self.dice.rollValues != []:
+                                self.dice.rollstr = str(self.dice.rollValues[0])
+                            self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
+                            self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
+                            if self.dice.rollValues == []:
+                                self.gameState = GameState.WHITE_TO_ROLL
+                            
+                            #check for win condition
+                            home = 0
+                            for stone in self.player2.stones:
+                                if stone.location >= 19:
+                                    home += 1
+                            if home == len(self.player2.stones):
+                                self.player2.victory = True
+                                self.gameState = GameState.GAME_OVER
 
-                                    #take enemy pieces at move location
-                                    for stone in self.player1.stones:
-                                        if stone.location == 25 - move.location:
-                                            stone.location = 0
-                                            self.player1.restrict = True
-
-                                    #update unused dice
-                                    if moved in self.dice.rollValues:
-                                        self.dice.rollValues.remove(moved)
-                                        self.player2.getMovable()
-
-                                    #update dice roll
-                                    if self.dice.rollValues != []:
-                                        self.dice.rollstr = str(self.dice.rollValues[0])
-                                    self.dice.textAfterRoll = self.dice.textFont.render("Your roll: " + self.dice.rollstr, True, WHITE, BLACK)
-                                    self.dice.textAfterRect = self.dice.textAfterRoll.get_rect()
-                                    if self.dice.rollValues == []:
-                                        self.gameState = GameState.WHITE_TO_ROLL
-                                        
-                                    #check for win condition
-                                    home = 0
-                                    for stone in self.player2.stones:
-                                        if stone.location >= 19:
-                                            home += 1
-                                    if home == len(self.player2.stones):
-                                        self.player2.victory = True
-                                        self.gameState = GameState.GAME_OVER
-
-
-                elif self.gameState == GameState.GAME_OVER:
-                    # winner is displayed, user clicks a restart button to play again
-                    pass
-
+                    else:
+                        if event.type == pygame.MOUSEBUTTONUP:
+                            self.mouseReleased(*(event.pos))
+                
+                if event.type == pygame.QUIT:
+                    playing = False
             screen.fill(self.bgColor)
             self.redrawAll(screen)
             pygame.display.flip()
-            if event.type == pygame.QUIT:
-                pygame.quit()
 
-
+        pygame.quit()
 
 def main():
     player1 = Player(WHITE)
-    player2 = Player(BLACK)
+    player2 = RandomAI(BLACK)
     game = BackgammonGame(player1, player2)
     game.run()
 
